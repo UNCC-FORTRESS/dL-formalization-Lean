@@ -63,6 +63,29 @@ inductive Term (V : Type*) where
   /-- arithmetic `θ ⊕ δ` -/
   | binop : AOp → Term V → Term V → Term V
 
+/-- A (vector) system of differential equations: an association of each evolving
+variable `x` with the term `θ` giving its derivative `x' = θ`.
+
+NOTE (choice 3, revised): Fig 2's prose says `x` "can be a vector of variables and
+then θ is a vector of terms". A system `{x' = f(x,y), y' = g(x,y)}` is exactly a
+list of `(x, f)`, `(y, g)`. Both reference formalizations use an isomorphic tree
+(Isabelle `OSing`/`OProd`, Coq-dL `ODEsing`/`ODEprod`) and forbid a variable
+appearing on two left-hand sides via a *separate* well-formedness predicate
+(Isabelle `osafe`'s disjointness side-condition, Coq-dL `wf_ode`), not by the
+datatype. We take the flat `List` (the tree's only extra generality was an
+ODE-symbol constructor for uniform substitution, absent from Fig 2) and mirror the
+"loose datatype + separate predicate" discipline via `ODESystem.WellFormed`.
+
+Variables not named on any left-hand side stay constant during evolution (the M2
+semantics holds them fixed; equivalently `y' = 0`), matching both refs. -/
+abbrev ODESystem (V : Type*) := List (V × Term V)
+
+/-- Well-formedness for a vector ODE: no variable is assigned a derivative twice
+(each `x'` is defined at most once). Kept separate from the datatype, exactly as
+Isabelle `osafe` / Coq-dL `wf_ode` do; consumed where the M2 semantics needs it. -/
+def ODESystem.WellFormed {V : Type*} (sys : ODESystem V) : Prop :=
+  (sys.map Prod.fst).Nodup
+
 /-! Hybrid programs and dL formulas are mutually recursive: programs contain
 formulas (`?ϕ`, the ODE domain `ψ`) and formulas contain programs (`[α]ϕ`).
 They must live in a shared universe `u`, hence the explicit `universe`. -/
@@ -78,14 +101,11 @@ inductive Program (V : Type u) where
   | assign : V → Term V → Program V
   /-- nondeterministic assignment `x := *` -/
   | assignAny : V → Program V
-  /-- continuous evolution `{x' = θ} & ψ`.
-
-  NOTE: Fig 2's core grammar is single-variable (`{x' = θ}`); the prose notes
-  `x` "can be a vector". We take the single-variable form here — one bound
-  variable `x`, one right-hand term `θ`, one evolution-domain formula `ψ`.
-  ODE systems are deferred (extend to a list of `V × Term V` later if a
-  downstream milestone needs them). -/
-  | ode : V → Term V → Formula V → Program V
+  /-- continuous evolution `{x' = θ} & ψ`, vector form: a system `sys` of
+  equations `xᵢ' = θᵢ` evolving simultaneously, with evolution-domain formula `ψ`
+  constraining the joint state throughout. Well-formedness (`sys.WellFormed`) is a
+  separate predicate, not enforced here — see `ODESystem`. -/
+  | ode : ODESystem V → Formula V → Program V
   /-- test `?ϕ` -/
   | test : Formula V → Program V
   /-- sequential composition `α;β` -/
