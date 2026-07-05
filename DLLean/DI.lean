@@ -12,7 +12,7 @@ import DLLean.ODEBridge
 No differential terms / variables. The invariant candidate `g : State V → ℝ` is a
 smooth *semantic* function (Option 1: differentiability as a hypothesis; a future
 syntactic-polynomial layer could discharge it). DI is a boundary/Lie invariance
-theorem over `⟦{sys & ψ}⟧` (same content as relCertifier `flow_cert_sound_*`).
+theorem over `⟦{sys & ψ}⟧`.
 
 * `Lie` — semantic Lie derivative, `∑_{(xᵢ,θᵢ)∈sys} (∂g/∂xᵢ)·⟦θᵢ⟧`.
 * `DI_strict` — `Lie < 0` on the boundary `{g = 0}` preserves `g ≤ 0`.
@@ -20,7 +20,8 @@ theorem over `⟦{sys & ψ}⟧` (same content as relCertifier `flow_cert_sound_*
   no regularity needed).
 * `nonstrict_boundary_insufficient` — the `t²` counterexample: `Lie ≤ 0` on the
   boundary *alone* is unsound. The sound boundary-only form needs a regular-boundary
-  (Bony–Brezis/Nagumo subtangency) hypothesis, which is not in vendored Mathlib.
+  hypothesis (the closed-set flow-invariance / subtangency theorem), which is not in
+  vendored Mathlib.
 
 `[Fintype V]` makes `State V = V → ℝ` a finite-dimensional normed space (so `g`
 has an `fderiv`); the type is unchanged.
@@ -161,7 +162,7 @@ flow. This is the honest, provable non-strict rule.
 
 The tighter *boundary-only* non-strict check (`Lie ≤ 0` only on `{g = 0}`, what an
 SMT solver verifies) is unsound without a regular-boundary hypothesis — see
-`nonstrict_boundary_insufficient` — and a sound version needs Bony–Brezis/Nagumo
+`nonstrict_boundary_insufficient` — and a sound version needs closed-set flow-invariance
 subtangency, which is not in the vendored Mathlib. -/
 theorem DI_nonstrict_domain {sys : ODESystem V} {ψ : Formula V} {g : State V → ℝ}
     (hwf : sys.WellFormed) (hg : Differentiable ℝ g)

@@ -1,9 +1,8 @@
 # dL-lean — status map for downstream repos
 
-Single-program dL foundation: syntax, denotational semantics, loop metatheory,
-the Mathlib-ODE bridge, a modal-axiom core, and frame-aware static semantics.
-Faithful to Figure 2 of the relCertifier appendix and Platzer's *Complete Uniform
-Substitution Calculus for dL* (static semantics). Apache 2.0.
+Single-program dL foundation: syntax, denotational semantics, loop metatheory, the
+Mathlib-ODE bridge, a modal-axiom core, frame-aware static semantics, and
+differential invariants. Apache 2.0.
 
 **Invariant across every result:** `lake build` green, no `sorry`, and
 `#print axioms` shows only `propext` / `Classical.choice` / `Quot.sound`.
@@ -41,10 +40,9 @@ Namespace `DL`. Variable type `V` is a parameter; `State V := V → ℝ`.
   `⟦ode sys ψ⟧ ν ν' ↔ ∃ r Φ, … ∧ IsIntegralCurveOn Φ (fun _ => odeField sys) (Icc 0 r) ∧ …`
 - `[Fintype V]` makes `State V = V → ℝ` a complete normed space **without changing
   the type**. This is the gateway to Mathlib's ODE metatheory:
-  `IsPicardLindelof.exists_eq_forall_mem_Icc_hasDerivWithinAt` (existence, for `DG`),
+  `IsPicardLindelof.exists_eq_forall_mem_Icc_hasDerivWithinAt` (existence),
   `ODE_solution_unique_of_mem_Icc_right` (uniqueness), and
-  `dist_le_of_trajectories_ODE_of_mem` (Grönwall trajectory divergence, for the
-  relational / simulation-distance work).
+  `dist_le_of_trajectories_ODE_of_mem` (Grönwall trajectory divergence).
 
 ### Metatheory + calculus core ([Metatheory.lean](DLLean/Metatheory.lean), [Calculus.lean](DLLean/Calculus.lean))
 - `box_test`, `box_seq`, `box_choice`, `diamond_sem` (+ `@[simp]` unfold lemmas
@@ -60,26 +58,41 @@ Namespace `DL`. Variable type `V` is a parameter; `State V := V → ℝ`.
 - `Term.coincidence`, and mutual `Formula.coincidence` / `Program.coincidence`.
   **Program coincidence is frame-aware:** given `EqOn ν ṽ V` with `V ⊇ FV(α)` and
   `(ν,ω)∈⟦α⟧`, yields `ω̃` with `(ṽ,ω̃)∈⟦α⟧` and `EqOn ω ω̃ (V ∪ MBV α)`. This
-  `V∪MBV(α)` output-agreement is the reusable **frame lemma** for the downstream
-  Q-safety side-conditions (freshness / non-interference).
+  `V∪MBV(α)` output-agreement is the reusable **frame lemma** for downstream
+  freshness / non-interference side-conditions.
 - `Program.bound_effect` : a run changes only `BV(α)`.
 - Consumers: `V_axiom` (`FV(ϕ)∩BV(α)=∅ ⟹ ϕ→[α]ϕ`), `DW` (`[{x'=θ&ψ}]ψ`).
 - Coincidence has **no `[DecidableEq V]`** in its type (classical in-proof).
 
+### Differential invariants ([DI.lean](DLLean/DI.lean))
+- `Lie sys g x = Σ_{(xᵢ,θᵢ)∈sys} fderiv ℝ g x (Pi.single xᵢ 1) · ⟦θᵢ⟧ x` — the
+  semantic Lie derivative of a smooth candidate `g : State V → ℝ` along the ODE
+  field. `Lie_eq_fderiv : Lie = fderiv g x (odeField sys x)` (via `WellFormed`).
+- `BoxLe α g ν := ∀ ω, ⟦α⟧ ν ω → g ω ≤ 0` (the sublevel-set box).
+- `DI_strict` : `g ≤ 0` initially and `Lie(g) < 0` on `{g=0}` within the domain ⟹
+  `g ≤ 0` throughout. No `g`-scope side-condition needed — masking makes `Lie` the
+  complete directional derivative along the flow.
+- `DI_nonstrict_domain` : `Lie(g) ≤ 0` throughout the domain ⟹ invariant (sound, no
+  regularity).
+- `nonstrict_boundary_insufficient` : counterexample — `Lie ≤ 0` on `{g=0}` *alone*
+  is unsound. A sound boundary-only form needs the closed-set flow-invariance
+  (subtangency) theorem, which is not in vendored Mathlib.
+- Needs `[Fintype V] [DecidableEq V]` (`fderiv` on `V → ℝ`).
+
 ## Deliberate divergences (both sound, documented in-file)
-1. **No differential variables.** State is `V → ℝ`; Platzer's `x'` coordinate is
-   absent, so ODE `BV = MBV = {x}` (not `{x,x'}`). Consistent with M2 masking.
-2. **Empty signature.** No uninterpreted function/predicate symbols, so Platzer's
-   `Σ`/`I=J` hypotheses are vacuous and omitted; single fixed interpretation.
+1. **No differential variables.** State is `V → ℝ`; there is no `x'` coordinate, so
+   ODE `BV = MBV = sys.boundSet` (the `x`s only). Consistent with the M2 masking.
+2. **Empty signature.** No uninterpreted function/predicate symbols, so the
+   interpretation-agreement side-conditions are vacuous and omitted; single fixed
+   interpretation.
 
-## NOT built (out of scope — these are your milestones)
-- **Differential axioms** `DI`, `DG` (and `DE`, `DC`). `DI` needs boundary-Lie
-  analysis; `DG` needs Picard–Lindelöf existence — both reachable from the ODE
-  bridge, but each is its own milestone.
-- **Uniform substitution** — the large layer. No substitution operator, no
-  contexts, no `MBV`-based US machinery beyond the frame lemma above.
-- **Relational / biprogram / ∀∃ / certificate** layers — separate downstream repos
-  that import this one.
+## NOT built (out of scope — these are downstream milestones)
+- **Sound boundary-only non-strict DI** — needs the closed-set flow-invariance
+  (subtangency) theorem, absent from vendored Mathlib.
+- **Differential ghosts** `DG` (needs Picard–Lindelöf existence — reachable from the
+  ODE bridge), and the other differential axioms.
+- **Uniform substitution** — no substitution operator, no contexts.
+- **Relational / biprogram / ∀∃ / certificate** layers — separate downstream repos.
 
-If you find yourself needing a substitution operator or relational modalities,
-you are past this foundation's scope by design.
+If you find yourself needing a substitution operator or relational modalities, you
+are past this foundation's scope by design.

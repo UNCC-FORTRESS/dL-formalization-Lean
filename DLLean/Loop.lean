@@ -8,7 +8,7 @@ import DLLean.Metatheory
 /-!
 # Loop semantics and induction (Milestone 4)
 
-`⟦α*⟧` is already the reflexive-transitive closure of `⟦α⟧` (Fig 2, defined in
+`⟦α*⟧` is already the reflexive-transitive closure of `⟦α⟧` (defined in
 `Semantics.lean` as `Relation.ReflTransGen`). Here we expose it and prove the two
 loop principles the downstream work needs:
 

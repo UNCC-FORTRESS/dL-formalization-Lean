@@ -9,13 +9,13 @@ import DLLean.Loop
 /-!
 # Coincidence and bound-effect (static-semantics milestone)
 
-Following Platzer, *A Complete Uniform Substitution Calculus for dL*, Lemmas 1–4.
+The standard free-variable coincidence and bound-effect metatheory.
 Single fixed interpretation (empty signature), differential-variable-free state.
 
 * `Term.coincidence`     — a term's value depends only on its free variables.
 * `Formula.coincidence` / `Program.coincidence` — mutual; programs carry the
-  **frame-aware** `V ∪ MBV(α)` output-agreement conjunct (Lemma 4, augmented).
-* `Program.bound_effect` — a run changes only bound variables (Lemma 1).
+  **frame-aware** `V ∪ MBV(α)` output-agreement conjunct.
+* `Program.bound_effect` — a run changes only bound variables.
 * `V_axiom`, `DW` — sanity consumers.
 -/
 
@@ -25,7 +25,7 @@ open Set
 
 variable {V : Type*}
 
-/-- **Coincidence for terms** (Lemma 2): equal on `FV(θ)` ⟹ equal values. -/
+/-- **Coincidence for terms**: equal on `FV(θ)` ⟹ equal values. -/
 theorem Term.coincidence (θ : Term V) {ν w : State V}
     (h : Set.EqOn ν w θ.fv) : θ.eval ν = θ.eval w := by
   induction θ with
@@ -35,11 +35,11 @@ theorem Term.coincidence (θ : Term V) {ν w : State V}
       simp only [Term.eval]
       rw [iha (h.mono (by simp [Term.fv])), ihb (h.mono (by simp [Term.fv]))]
 
-/-! ## Coincidence for formulas and programs (mutual, Platzer Lemmas 3–4) -/
+/-! ## Coincidence for formulas and programs (mutual) -/
 
 mutual
 
-/-- **Coincidence for formulas** (Lemma 3). -/
+/-- **Coincidence for formulas**. -/
 theorem Formula.coincidence (ϕ : Formula V) {ν w : State V}
     (h : Set.EqOn ν w ϕ.fv) : ϕ.sat ν ↔ ϕ.sat w := by
   classical
@@ -98,7 +98,7 @@ theorem Formula.coincidence (ϕ : Formula V) {ν w : State V}
         · exact Or.inr hzm
         · exact Or.inl (Or.inr ⟨hz, hzm⟩)
 
-/-- **Coincidence for programs** (Lemma 4, frame-augmented): equal on `V ⊇ FV(α)`
+/-- **Coincidence for programs**: equal on `V ⊇ FV(α)`
 and `(ν,ω) ∈ ⟦α⟧` gives a matching run from `w` whose end agrees with `ω` on
 `V ∪ MBV(α)`. -/
 theorem Program.coincidence (α : Program V) {ν w : State V} {W : Set V}
@@ -235,7 +235,7 @@ theorem Program.coincidence (α : Program V) {ν w : State V} {W : Set V}
 
 end
 
-/-- **Bound effect** (Lemma 1): a run of `α` changes only its bound variables. -/
+/-- **Bound effect**: a run of `α` changes only its bound variables. -/
 theorem Program.bound_effect (α : Program V) :
     ∀ {ν ω : State V}, Program.sem α ν ω → ∀ x, x ∉ α.bv → ν x = ω x := by
   intro ν ω hrun x hx

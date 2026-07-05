@@ -10,7 +10,7 @@ import Mathlib
 
 Single-program differential dynamic logic (dL), syntax only.
 
-The grammar follows **Figure 2** of the relCertifier appendix (authoritative):
+The standard single-program dL grammar:
 
 ```
 θ, δ ::= x | c | θ ⊕ δ
@@ -28,11 +28,11 @@ namespace DL
 
 /-- Arithmetic operators `⊕` for terms.
 
-NOTE: Fig 2 writes a single binary node `θ ⊕ δ` where "⊕ denotes arithmetics"
+NOTE: the grammar writes a single binary node `θ ⊕ δ` where "⊕ denotes arithmetics"
 without enumerating the operators. We reify `⊕` as a small tag inductive rather
 than carry a raw `ℝ → ℝ → ℝ` (which would destroy decidable structure and make
 the term type non-inspectable). Seeded with `add`/`sub`/`mul` — enough for the
-polynomial dynamics the paper targets. Division is omitted (partial on ℝ);
+intended polynomial dynamics. Division is omitted (partial on ℝ);
 easy to add later if needed. -/
 inductive AOp where
   | add
@@ -42,7 +42,7 @@ inductive AOp where
 
 /-- Comparison operators `∼` for atomic formulas.
 
-NOTE: Fig 2 writes `θ ∼ δ` where "∼ denotes comparisons", again unenumerated.
+NOTE: the grammar writes `θ ∼ δ` where "∼ denotes comparisons", again unenumerated.
 Reified as a tag inductive over the six standard order/equality relations. -/
 inductive CompOp where
   | eq
@@ -66,14 +66,14 @@ inductive Term (V : Type*) where
 /-- A (vector) system of differential equations: an association of each evolving
 variable `x` with the term `θ` giving its derivative `x' = θ`.
 
-NOTE (choice 3, revised): Fig 2's prose says `x` "can be a vector of variables and
+NOTE (choice 3, revised): the grammar's prose says `x` "can be a vector of variables and
 then θ is a vector of terms". A system `{x' = f(x,y), y' = g(x,y)}` is exactly a
 list of `(x, f)`, `(y, g)`. Both reference formalizations use an isomorphic tree
 (Isabelle `OSing`/`OProd`, Coq-dL `ODEsing`/`ODEprod`) and forbid a variable
 appearing on two left-hand sides via a *separate* well-formedness predicate
 (Isabelle `osafe`'s disjointness side-condition, Coq-dL `wf_ode`), not by the
 datatype. We take the flat `List` (the tree's only extra generality was an
-ODE-symbol constructor for uniform substitution, absent from Fig 2) and mirror the
+ODE-symbol constructor for uniform substitution, absent here) and mirror the
 "loose datatype + separate predicate" discipline via `ODESystem.WellFormed`.
 
 Variables not named on any left-hand side stay constant during evolution (the M2
@@ -117,7 +117,7 @@ inductive Program (V : Type u) where
 
 /-- dL formulas `ϕ, ψ ::= ⊤ | θ ∼ δ | ¬ϕ | ϕ ∧ ψ | ∀x. ϕ | [α]ϕ`.
 
-NOTE: only Fig 2's primitives are constructors. Derived forms
+NOTE: only the grammar's primitives are constructors. Derived forms
 (`⊥, ∨, →, ↔, ∃, ⟨α⟩`) are abbreviations to be defined in Milestone 2. -/
 inductive Formula (V : Type u) where
   /-- truth `⊤` -/

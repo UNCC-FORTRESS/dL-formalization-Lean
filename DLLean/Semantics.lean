@@ -8,14 +8,14 @@ import DLLean.Syntax
 /-!
 # dL denotational semantics (Milestone 2)
 
-Following **Figure 2** of the relCertifier appendix.
+The denotational semantics of single-program dL.
 
 * States are `State V := V → ℝ`.
-* Term semantics `Term.eval : Term V → State V → ℝ` (Fig 2 `νJθK`).
+* Term semantics `Term.eval : Term V → State V → ℝ` (`νJθK`).
 * Program semantics `Program.sem : Program V → State V → State V → Prop`
-  (Fig 2 `⟦α⟧`, the transition relation).
+  (`⟦α⟧`, the transition relation).
 * Formula satisfaction `Formula.sat : Formula V → State V → Prop`
-  (Fig 2 `⟦ϕ⟧`, the satisfying set as a predicate).
+  (`⟦ϕ⟧`, the satisfying set as a predicate).
 
 `Program.sem` and `Formula.sat` are mutually recursive (`[α]ϕ` needs `⟦α⟧`;
 `?ϕ` and the ODE domain need `⟦ϕ⟧`). The box `[α]ϕ` is a `Formula.sat` case;
@@ -26,18 +26,18 @@ the diamond `⟨α⟩ϕ = ¬[α]¬ϕ` is a *derived* builder, not a constructor.
 
 namespace DL
 
-/-- A state assigns a real value to each variable (Fig 2: `ν : V → ℝ`). -/
+/-- A state assigns a real value to each variable (`ν : V → ℝ`). -/
 abbrev State (V : Type*) := V → ℝ
 
 /-- Interpretation of an arithmetic operator `⊕` as a real binary function
-(Fig 2: `νJθ ⊕ δK = νJθK ⊕ νJδK`). -/
+(`νJθ ⊕ δK = νJθK ⊕ νJδK`). -/
 def AOp.interp : AOp → ℝ → ℝ → ℝ
   | .add => (· + ·)
   | .sub => (· - ·)
   | .mul => (· * ·)
 
 /-- Interpretation of a comparison operator `∼` as a real relation
-(Fig 2: `νJθ ∼ δK` iff `νJθK ∼ νJδK`). -/
+(`νJθ ∼ δK` iff `νJθK ∼ νJδK`). -/
 def CompOp.interp : CompOp → ℝ → ℝ → Prop
   | .eq => (· = ·)
   | .ne => (· ≠ ·)
@@ -46,7 +46,7 @@ def CompOp.interp : CompOp → ℝ → ℝ → Prop
   | .gt => (· > ·)
   | .ge => (· ≥ ·)
 
-/-- Term semantics `νJθK` (Fig 2, term semantics block). -/
+/-- Term semantics `νJθK` (term semantics block). -/
 def Term.eval {V : Type*} : Term V → State V → ℝ
   | .var x,       ν => ν x
   | .const c,     _ => c
@@ -64,7 +64,7 @@ Mutually recursive, structurally on the program/formula. -/
 
 mutual
 
-/-- Program semantics `⟦α⟧ : State → State → Prop` (Fig 2, program semantics).
+/-- Program semantics `⟦α⟧ : State → State → Prop` (program semantics).
 `Program.sem α ν ν'` means "some execution of `α` goes from `ν` to `ν'`". -/
 def Program.sem {V : Type*} : Program V → State V → State V → Prop
   -- `⟦x := θ⟧ = {(ν,ν') | ν'(x) = νJθK and ν'(y) = ν(y) for all y ≠ x}`.
@@ -84,14 +84,14 @@ def Program.sem {V : Type*} : Program V → State V → State V → Prop
     breaking frame properties. Matches Isabelle `mk_v` (off `semBV`) and Coq-dL
     `equal_states_except (ode_footprint)`.
   * **(c) Domain throughout** — `Φ t ∈ ⟦ψ⟧` for *all* `t ∈ [0,r]`, not just the
-    endpoints (Fig 2: "for all of that duration").
+    endpoints ("for all of that duration").
 
   Plus init/endpoint/`r ≥ 0`: `Φ 0 = ν`, `Φ r = ν'`, `0 ≤ r`.
 
   NOTE: (a) uses `HasDerivWithinAt … (Set.Icc 0 r)`, the derivative *within* the
   interval, not the two-sided `HasDerivAt` written in the review gate. Reason:
   at the endpoints `0` and `r`, two-sided `HasDerivAt` demands differentiability
-  in a full ℝ-neighborhood outside `[0,r]`, which is strictly stronger than Fig 2
+  in a full ℝ-neighborhood outside `[0,r]`, which is strictly stronger than the standard within-interval reading
   and both refs (Isabelle `solves_ode` uses `at t within {0..t}`), and would
   wrongly exclude solutions that exist on `[0,r]` but cannot be extended past `r`.
   Say the word to switch to two-sided `HasDerivAt` instead.
@@ -124,7 +124,7 @@ def Program.sem {V : Type*} : Program V → State V → State V → Prop
       Relation.ReflTransGen (Program.sem α) ν ν'
 
 /-- Formula satisfaction `⟦ϕ⟧`, as a predicate `State V → Prop`
-(Fig 2, formula semantics). `Formula.sat ϕ ν` means `ν ∈ ⟦ϕ⟧`. -/
+(formula semantics). `Formula.sat ϕ ν` means `ν ∈ ⟦ϕ⟧`. -/
 def Formula.sat {V : Type*} : Formula V → State V → Prop
   -- `⟦⊤⟧ = STA`.
   | .tt, _ => True
@@ -134,7 +134,7 @@ def Formula.sat {V : Type*} : Formula V → State V → Prop
   | .neg ϕ, ν => ¬ Formula.sat ϕ ν
   -- `⟦ϕ ∧ ψ⟧ = ⟦ϕ⟧ ∩ ⟦ψ⟧`.
   | .and ϕ ψ, ν => Formula.sat ϕ ν ∧ Formula.sat ψ ν
-  -- `⟦∀x. ϕ⟧ = ⟦[x := *]ϕ⟧` (Fig 2). Holds at `ν` iff `ϕ` holds at every state
+  -- `⟦∀x. ϕ⟧ = ⟦[x := *]ϕ⟧`. Holds at `ν` iff `ϕ` holds at every state
   -- agreeing with `ν` off `x`. Avoids `Function.update`, hence no `DecidableEq V`.
   | .all x ϕ, ν =>
       ∀ ν' : State V, (∀ y, y ≠ x → ν' y = ν y) → Formula.sat ϕ ν'
@@ -144,7 +144,7 @@ def Formula.sat {V : Type*} : Formula V → State V → Prop
 
 end
 
-/-! ## Derived connectives (abbreviations, Fig 2) — not constructors -/
+/-! ## Derived connectives (abbreviations) — not constructors -/
 
 namespace Formula
 
@@ -160,7 +160,7 @@ def imp (ϕ ψ : Formula V) : Formula V := or (neg ϕ) ψ
 def iff (ϕ ψ : Formula V) : Formula V := and (imp ϕ ψ) (imp ψ ϕ)
 /-- `∃x. ϕ := ¬∀x. ¬ϕ`. -/
 def ex (x : V) (ϕ : Formula V) : Formula V := neg (all x (neg ϕ))
-/-- Diamond `⟨α⟩ϕ := ¬[α]¬ϕ` (Fig 2). -/
+/-- Diamond `⟨α⟩ϕ := ¬[α]¬ϕ`. -/
 def diamond (α : Program V) (ϕ : Formula V) : Formula V := neg (box α (neg ϕ))
 
 /-- Validity: `ϕ` holds in every state. -/
