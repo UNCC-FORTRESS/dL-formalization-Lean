@@ -33,18 +33,25 @@ Apache 2.0. No GPL-derived content.
 Small sessions. Report definitions for review before proving metatheorems.
 
 - **M1 — Syntax.** Terms, hybrid programs, dL formulas as inductive types.
-  States as `V → ℝ`. **[current]**
+  States as `V → ℝ`. **[done]** (ODE generalized to vector `{x⃗'=θ⃗}&ψ`.)
 - **M2 — Semantics.** `⟦α⟧ : State → State → Prop` and `⟦ϕ⟧ : State → Prop`,
   following Fig 2. Hard case: ODE `{x'=θ}&ψ` — quantify over solutions
   `Φ : [0,r] → State`, `Φ 0 = ν`, `Φ r = ν'`, `Φ t ∈ ⟦ψ⟧` throughout `[0,r]`.
-  Use Mathlib `HasDerivAt` / `IsIntegralCurveOn`. Derive `[α]ϕ`; `⟨α⟩ϕ = ¬[α]¬ϕ`.
+  Uses `HasDerivWithinAt` (within `Icc 0 r`); `⟨α⟩ϕ = ¬[α]¬ϕ`. **[done]**
 - **M3 — Basic metatheory.** `[?ϕ]ψ ↔ (ϕ → ψ)`, `[α;β]ϕ ↔ [α][β]ϕ`,
-  `[α∪β]ϕ ↔ [α]ϕ ∧ [β]ϕ`, `⟨α⟩ϕ ↔ ¬[α]¬ϕ`, plus one concrete ODE example.
-- **M4 — Loop semantics.** `⟦α*⟧` as reflexive-transitive closure + loop induction.
+  `[α∪β]ϕ ↔ [α]ϕ ∧ [β]ϕ`, `⟨α⟩ϕ ↔ ¬[α]¬ϕ`, concrete ODE example. **[done]**
+- **M4 — Loop semantics.** `⟦α*⟧` as reflexive-transitive closure + loop
+  induction. **[done]**
 
-**Proof calculus — exploratory, not required.** After semantics + basic metatheory,
-optionally attempt dL proof rules / uniform substitution. Scope narrowly, report
-before investing.
+**Beyond the required M1–M4 (all done, see [STATUS.md](STATUS.md)):**
+- **ODE bridge** — per-component sem ↔ Mathlib `IsIntegralCurveOn` (unlocks
+  Picard–Lindelöf / uniqueness / Grönwall via `[Fintype V]`). **[done]**
+- **Calculus scout** — `K`, necessitation, monotonicity, semantic `[:=]`. **[done]**
+- **Static semantics** — `FV`/`BV`/`MBV`, frame-aware coincidence, bound-effect,
+  `V`/`DW` (Platzer Def 8–10, Lemma 1–4). **[done]**
+
+**Not built (deliberate):** differential axioms `DI`/`DG`, uniform substitution,
+relational/biprogram layers. See [STATUS.md](STATUS.md).
 
 ## Discipline (every milestone)
 
