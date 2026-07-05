@@ -61,7 +61,11 @@ Sketch: `simp only [sat_box, sem_test]`, then the antecedent `ν = ν' ∧ ϕ ν
 splits. `constructor`; forward feeds `⟨rfl, hϕ⟩`; backward `rintro h ν' ⟨rfl, hϕ⟩`. -/
 theorem box_test (ϕ ψ : Formula V) (ν : State V) :
     Formula.sat (.box (.test ϕ) ψ) ν ↔ (Formula.sat ϕ ν → Formula.sat ψ ν) := by
-  sorry
+  simp only [sat_box, sem_test]
+  constructor;
+  · intro h hϕ; exact h ν ⟨rfl, hϕ⟩
+  · rintro h ν' ⟨rfl, hϕ⟩; exact h hϕ
+
 
 /-- `[α;β]ϕ ↔ [α][β]ϕ`.
 
@@ -71,7 +75,10 @@ forward `intro h μ hα ν' hβ; exact h ν' ⟨μ, hα, hβ⟩`; backward
 `rintro h ν' ⟨μ, hα, hβ⟩; exact h μ hα ν' hβ`. -/
 theorem box_seq (α β : Program V) (ϕ : Formula V) (ν : State V) :
     Formula.sat (.box (.seq α β) ϕ) ν ↔ Formula.sat (.box α (.box β ϕ)) ν := by
-  sorry
+  simp only [sat_box, sem_seq]
+  constructor;
+  · intro h μ hα ν' hβ; exact h ν' ⟨μ, hα, hβ⟩
+  · rintro h ν' ⟨μ, hα, hβ⟩; exact h μ hα ν' hβ
 
 /-- `[α ∪ β]ϕ ↔ [α]ϕ ∧ [β]ϕ`.
 
@@ -82,7 +89,10 @@ returns `⟨fun ν' h => .., fun ν' h => ..⟩` feeding `Or.inl/Or.inr`; backwa
 theorem box_choice (α β : Program V) (ϕ : Formula V) (ν : State V) :
     Formula.sat (.box (.choice α β) ϕ) ν ↔
       Formula.sat (.box α ϕ) ν ∧ Formula.sat (.box β ϕ) ν := by
-  sorry
+  simp only [sat_box, sem_choice]
+  constructor;
+  · intro h; exact ⟨fun ν' hα => h ν' (Or.inl hα), fun ν' hβ => h ν' (Or.inr hβ)⟩
+  · rintro ⟨hα, hβ⟩ ν' (h | h); exacts [hα ν' h, hβ ν' h]
 
 /-- `⟨α⟩ϕ ↔ ∃ ν', (ν,ν') ∈ ⟦α⟧ ∧ ϕ ν'` — the meaning of `⟨α⟩ϕ = ¬[α]¬ϕ`.
 
@@ -91,7 +101,9 @@ turns `¬ ∀ ν', sem → ¬ ϕ` into `∃ ν', sem ∧ ϕ` directly. Should cl
 or need no more. (`Classical` is already available via Mathlib.) -/
 theorem diamond_sem (α : Program V) (ϕ : Formula V) (ν : State V) :
     Formula.sat (.diamond α ϕ) ν ↔ ∃ ν', Program.sem α ν ν' ∧ Formula.sat ϕ ν' := by
-  sorry
+  rw [sat_diamond]
+  push Not
+  rfl
 
 /-! ## Concrete ODE example (witness constructed together)
 
