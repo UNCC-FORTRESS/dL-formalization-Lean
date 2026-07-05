@@ -15,9 +15,12 @@ syntactic-polynomial layer could discharge it). DI is a boundary/Lie invariance
 theorem over `⟦{sys & ψ}⟧` (same content as relCertifier `flow_cert_sound_*`).
 
 * `Lie` — semantic Lie derivative, `∑_{(xᵢ,θᵢ)∈sys} (∂g/∂xᵢ)·⟦θᵢ⟧`.
-* `DI_strict` — `Lie < 0` on the boundary preserves `g ≤ 0`.
-* `DI_nonstrict` — `Lie ≤ 0` on the boundary, sound only under a regular-boundary
-  hypothesis `key`; `nonstrict_boundary_insufficient` shows why `key` is needed.
+* `DI_strict` — `Lie < 0` on the boundary `{g = 0}` preserves `g ≤ 0`.
+* `DI_nonstrict_domain` — `Lie ≤ 0` throughout the domain preserves `g ≤ 0` (sound,
+  no regularity needed).
+* `nonstrict_boundary_insufficient` — the `t²` counterexample: `Lie ≤ 0` on the
+  boundary *alone* is unsound. The sound boundary-only form needs a regular-boundary
+  (Bony–Brezis/Nagumo subtangency) hypothesis, which is not in vendored Mathlib.
 
 `[Fintype V]` makes `State V = V → ℝ` a finite-dimensional normed space (so `g`
 has an `fderiv`); the type is unchanged.
@@ -186,5 +189,57 @@ theorem DI_nonstrict_domain {sys : ODESystem V} {ψ : Formula V} {g : State V �
         hanti (Set.left_mem_Icc.mpr hr) (Set.right_mem_Icc.mpr hr) hr
     _ = g ν := by rw [hΦ0]
     _ ≤ 0 := hinit
+
+/-! ## Why the boundary-only non-strict check needs a regularity hypothesis
+
+The `t²` counterexample: over one variable, `x' = 1`, candidate `g(x) = x²`. On the
+boundary `{g = 0} = {x = 0}` the Lie derivative is `2x = 0 ≤ 0`, and `g = 0`
+initially — yet the flow reaches `x = 1` with `g = 1 > 0`. The boundary is
+irregular (`∇g = 2x = 0` there), which is exactly what a regular-boundary
+hypothesis rules out. So `Lie ≤ 0` on `{g = 0}` alone is **unsound**. -/
+theorem nonstrict_boundary_insufficient :
+    ∃ (sys : ODESystem Unit) (ψ : Formula Unit) (g : State Unit → ℝ) (ν : State Unit),
+      sys.WellFormed ∧ Differentiable ℝ g ∧
+      (∀ x, Formula.sat ψ x → g x = 0 → Lie sys g x ≤ 0) ∧
+      g ν ≤ 0 ∧ ¬ BoxLe (Program.ode sys ψ) g ν := by
+  refine ⟨[((), Term.const 1)], Formula.tt, fun x => (x ())^2, fun _ => 0, ?_, ?_, ?_, ?_, ?_⟩
+  · -- WellFormed
+    simp [ODESystem.WellFormed]
+  · -- Differentiable g
+    fun_prop
+  · -- boundary condition: on `{x() = 0}`, `Lie = 2·x() = 0 ≤ 0`
+    intro x _ hx0
+    have hx : x () = 0 := by nlinarith [sq_nonneg (x ()), hx0]
+    set P : State Unit →L[ℝ] ℝ := ContinuousLinearMap.proj () with hP
+    have hsq : HasDerivAt (fun r : ℝ => r ^ 2) (2 * x ()) (x ()) := by
+      simpa using hasDerivAt_pow 2 (x ())
+    have hcomp : ((fun r : ℝ => r ^ 2) ∘ (⇑P)) = fun y : State Unit => (y ())^2 := by
+      funext y; simp [hP]
+    have hHF : HasFDerivAt (fun y : State Unit => (y ())^2)
+        ((ContinuousLinearMap.smulRight (1 : ℝ →L[ℝ] ℝ) (2 * x ())).comp P) x := by
+      rw [← hcomp]; exact hsq.hasFDerivAt.comp x P.hasFDerivAt
+    have hval : Lie [((), Term.const 1)] (fun y : State Unit => (y ())^2) x = 2 * x () := by
+      rw [Lie]
+      simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, add_zero, Term.eval,
+        mul_one, hHF.fderiv, ContinuousLinearMap.comp_apply,
+        ContinuousLinearMap.smulRight_apply, smul_eq_mul, hP,
+        ContinuousLinearMap.proj_apply, Pi.single_eq_same, one_apply_eq_self, one_mul]
+    rw [hval, hx]; simp
+  · -- g ν ≤ 0
+    simp
+  · -- not invariant: the flow from 0 reaches x = 1 with g = 1 > 0
+    intro hbox
+    have hrun : Program.sem (Program.ode [((), Term.const 1)] Formula.tt)
+        (fun _ => 0) (fun _ => 1) := by
+      refine ⟨1, (fun t _ => t), zero_le_one, ?_, ?_, ?_, ?_, ?_⟩
+      · funext _; simp
+      · funext _; simp
+      · intro t _ p hp
+        rw [List.mem_singleton] at hp; subst hp
+        exact hasDerivWithinAt_id t (Set.Icc 0 1)
+      · intro t _ x hx; simp [ODESystem.bound] at hx
+      · intro t _; trivial
+    have hle := hbox _ hrun
+    norm_num at hle
 
 end DL
